@@ -1,10 +1,10 @@
 """
-uvicorn blogging:app --reload
-
+uvicorn blogging2:app --reload
+http://127.0.0.1:8000/docs
 """
 
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Form, Header
 from enum import Enum
 from pydantic import BaseModel, Field
 from uuid import UUID
@@ -32,11 +32,23 @@ class Blog(BaseModel):
                 {
                     "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                     "title": "Random Title",
-                    "author": "Prashant",
+                    "author": "Komal",
                     "description": "This is a very interesting blog",
                     "rating": 75
                 }
         }
+
+
+class BlogResponseWoRating(BaseModel):
+    id: UUID
+    title: str = Field(min_length=1)
+    author: str
+    description: Optional[str] = Field(
+        None,
+        title="description of blog",
+        max_length=250,
+        min_length=1
+    )
 
 
 app = FastAPI()
@@ -105,10 +117,22 @@ def create_blogs_without_api():
 ##########################################################
 # How to write a POST request with JSON request body?    #
 ##########################################################
-@app.post("/v2/createblog")
+@app.post("/v2/createblog", status_code=201)
 def create_blog(blog: Blog):
     BLOGS.append(blog)
     return BLOGS
+
+
+##########################################################
+# How to add a response validation in FastAPI?           #
+##########################################################
+@app.get("/blog/rating/{_id}", response_model=BlogResponseWoRating)
+async def read_blog_no_rating(blog_id: UUID):
+    for x in BLOGS:
+        if x.id == blog_id:
+            return x
+
+    return raise_item_cannot_found_exception()
 
 
 @app.get("/v2/")
@@ -161,3 +185,35 @@ def delete_blog(blog_id: UUID):
             return f"ID - {blog_id} has been deleted"
 
     return raise_item_cannot_found_exception()
+
+
+##########################################################
+# How to send a FORM data in request?                    #
+##########################################################
+@app.post("/blogs/login")
+def blog_login(username: str = Form(), password: str = Form()):
+    """
+
+    NOTE:
+        If we do not use `Form()`, FastAPI assumes parameters to function
+        are query params.
+
+        pip install python-multipart
+
+    Args:
+        username:
+        password:
+
+    Returns:
+
+    """
+
+    return {"username": username, "password": password}
+
+
+##########################################################
+# How can we pass  header in each request   ?            #
+##########################################################
+@app.get("/header")
+def read_header(random_header: Optional[str] = Header(None)):
+    return {"Random-Header": random_header}

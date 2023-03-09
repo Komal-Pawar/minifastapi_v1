@@ -6,6 +6,15 @@ uvicorn blogging:app --reload
 from typing import Optional
 from fastapi import FastAPI
 from enum import Enum
+from pydantic import BaseModel
+
+
+##########################################################
+# How to add a pydantic model and field validation?      #
+##########################################################
+class Blog(BaseModel):
+    title: str
+    author: str
 
 
 class LanguageName(Enum):
@@ -88,6 +97,7 @@ def create_blog(blog_title, blog_author):
     BLOGS[new_index] = {"title": blog_title, "author": blog_author}
     return BLOGS
 
+
 ##################################################
 # How to write a PUT request  in fastAPI?        #
 ##################################################
@@ -95,4 +105,15 @@ def create_blog(blog_title, blog_author):
 def update_blog(blog_name: str, blog_title: str, blog_author: str):
     blog_info = {"title": blog_title, "author": blog_author}
     BLOGS[blog_name] = blog_info
+    return BLOGS
+
+
+# V2 endpoints
+
+##########################################################
+# How to write a POST request with JSON request body?    #
+##########################################################
+@app.post("/v2/createblog")
+def create_blog(blog: Blog):
+    BLOGS.append(blog)
     return BLOGS
